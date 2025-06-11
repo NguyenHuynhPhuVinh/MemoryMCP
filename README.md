@@ -35,6 +35,7 @@ Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory`
 #### Tool Operations:
 
 - `create_tool`: Tạo tool tùy chỉnh
+- `create_api_tool`: Tạo API tool với template
 - `execute_tool`: Thực thi tool bằng ID/name
 - `list_tools`: Liệt kê tất cả tools
 - `delete_tool`: Xóa tool
@@ -97,7 +98,26 @@ Parameters:
 - handlerCode: "// JavaScript code để xử lý ghi chú"
 ```
 
-### 5. Sử dụng tool vừa tạo
+### 5. Tạo API tool để fetch dữ liệu
+
+```
+Tool: universalMemory
+Parameters:
+- action: "create_api_tool"
+- toolName: "weatherAPI"
+- toolDescription: "Tool để lấy thông tin thời tiết"
+- apiUrl: "https://api.openweathermap.org/data/2.5/weather"
+- apiMethod: "GET"
+- apiHeaders: {"Content-Type": "application/json"}
+- apiAuth: {
+    "type": "api-key",
+    "apiKey": "your-api-key",
+    "apiKeyHeader": "appid"
+  }
+- apiTimeout: 10000
+```
+
+### 6. Sử dụng tool vừa tạo
 
 ```
 Tool: universalMemory
@@ -107,7 +127,19 @@ Parameters:
 - args: {"action": "add", "title": "Meeting Notes", "content": "..."}
 ```
 
-### 6. Phân tích dữ liệu
+### 7. Sử dụng API tool
+
+```
+Tool: universalMemory
+Parameters:
+- action: "execute_tool"
+- toolName: "weatherAPI"
+- args: {
+    "params": {"q": "Hanoi,VN", "units": "metric"}
+  }
+```
+
+### 8. Phân tích dữ liệu
 
 ```
 Tool: universalMemory
@@ -116,7 +148,7 @@ Parameters:
 - analysisType: "summary"
 ```
 
-### 7. Xóa sạch tất cả entries
+### 9. Xóa sạch tất cả entries
 
 ```
 Tool: universalMemory
@@ -124,7 +156,7 @@ Parameters:
 - action: "clear_all"
 ```
 
-### 8. Xóa sạch tất cả tools
+### 10. Xóa sạch tất cả tools
 
 ```
 Tool: universalMemory
@@ -132,7 +164,7 @@ Parameters:
 - action: "clear_tools"
 ```
 
-### 9. Reset toàn bộ hệ thống
+### 11. Reset toàn bộ hệ thống
 
 ```
 Tool: universalMemory
@@ -220,6 +252,18 @@ Tạo tools riêng với JavaScript code để:
 - Tích hợp với external APIs
 - Automation workflows
 - Data analysis
+
+### API Tools
+
+Tạo API tools nhanh chóng với template có sẵn:
+
+- **Hỗ trợ tất cả HTTP methods**: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+- **Authentication**: Bearer token, Basic auth, API key
+- **Custom headers**: Tùy chỉnh headers cho từng request
+- **Request body**: Hỗ trợ JSON, form data, raw data
+- **Query parameters**: Dynamic query params
+- **Error handling**: Xử lý lỗi tự động
+- **Response formatting**: Format response theo MCP standard
 
 ### Analytics
 

@@ -43,6 +43,7 @@ export type UniversalAction =
   | "delete" // Xóa thông tin
   | "update" // Cập nhật thông tin
   | "create_tool" // Tạo tool mới
+  | "create_api_tool" // Tạo API tool với template
   | "execute_tool" // Thực thi tool
   | "list_tools" // Liệt kê tools
   | "delete_tool" // Xóa tool
@@ -85,6 +86,20 @@ export interface UniversalRequest {
   // For export/import
   format?: "json" | "csv" | "txt";
   data?: any;
+
+  // For API tool creation
+  apiUrl?: string;
+  apiMethod?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+  apiHeaders?: Record<string, string>;
+  apiAuth?: {
+    type: "bearer" | "basic" | "api-key";
+    token?: string;
+    username?: string;
+    password?: string;
+    apiKey?: string;
+    apiKeyHeader?: string;
+  };
+  apiTimeout?: number;
 }
 
 /**

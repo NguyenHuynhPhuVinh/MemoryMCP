@@ -24,6 +24,7 @@ export function registerMemoryServer(server: McpServer) {
           "delete", // Xóa thông tin
           "update", // Cập nhật thông tin
           "create_tool", // Tạo tool mới
+          "create_api_tool", // Tạo API tool với template
           "execute_tool", // Thực thi tool
           "list_tools", // Liệt kê tools
           "delete_tool", // Xóa tool
@@ -82,6 +83,32 @@ export function registerMemoryServer(server: McpServer) {
         .optional()
         .describe("Format dữ liệu"),
       data: z.any().optional().describe("Dữ liệu để import"),
+
+      // For API tool creation
+      apiUrl: z.string().optional().describe("URL của API endpoint"),
+      apiMethod: z
+        .enum(["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
+        .optional()
+        .describe("HTTP method"),
+      apiHeaders: z
+        .record(z.string())
+        .optional()
+        .describe("Default headers cho API"),
+      apiAuth: z
+        .object({
+          type: z.enum(["bearer", "basic", "api-key"]),
+          token: z.string().optional(),
+          username: z.string().optional(),
+          password: z.string().optional(),
+          apiKey: z.string().optional(),
+          apiKeyHeader: z.string().optional(),
+        })
+        .optional()
+        .describe("Authentication config"),
+      apiTimeout: z
+        .number()
+        .optional()
+        .describe("Timeout cho API request (ms)"),
     },
     async (params) => {
       try {
@@ -105,6 +132,11 @@ export function registerMemoryServer(server: McpServer) {
           analysisType: params.analysisType,
           format: params.format,
           data: params.data,
+          apiUrl: params.apiUrl,
+          apiMethod: params.apiMethod,
+          apiHeaders: params.apiHeaders,
+          apiAuth: params.apiAuth,
+          apiTimeout: params.apiTimeout,
         };
 
         // Thực thi universal tool
@@ -198,6 +230,7 @@ Chỉ cần sử dụng **1 tool duy nhất**: \`universalMemory\`
 
 #### Tool Operations:
 - **create_tool**: Tạo tool tùy chỉnh
+- **create_api_tool**: Tạo API tool với template
 - **execute_tool**: Thực thi tool bằng ID/name
 - **list_tools**: Liệt kê tất cả tools
 - **delete_tool**: Xóa tool
@@ -223,6 +256,11 @@ universalMemory(action: "retrieve", key: "user_preferences")
 ### Tạo tool tùy chỉnh:
 \`\`\`
 universalMemory(action: "create_tool", toolName: "notekeeper", ...)
+\`\`\`
+
+### Tạo API tool:
+\`\`\`
+universalMemory(action: "create_api_tool", toolName: "weatherAPI", apiUrl: "https://api.weather.com/v1/current", apiMethod: "GET", apiHeaders: {"X-API-Key": "your-key"})
 \`\`\`
 
 ### Thực thi tool:
@@ -367,6 +405,40 @@ switch (action) {
     return { content: [{ type: "text", text: JSON.stringify({ error: "Action không hợp lệ" }, null, 2) }] };
 }
 `,
+                  },
+                },
+
+                apiTool: {
+                  name: "weatherAPI",
+                  description: "Tool để lấy thông tin thời tiết",
+                  type: "processor",
+                  createdWith: "create_api_tool",
+                  example: {
+                    action: "create_api_tool",
+                    toolName: "weatherAPI",
+                    toolDescription:
+                      "Tool để lấy thông tin thời tiết từ OpenWeatherMap",
+                    apiUrl: "https://api.openweathermap.org/data/2.5/weather",
+                    apiMethod: "GET",
+                    apiHeaders: {
+                      "Content-Type": "application/json",
+                    },
+                    apiAuth: {
+                      type: "api-key",
+                      apiKey: "your-api-key",
+                      apiKeyHeader: "appid",
+                    },
+                    apiTimeout: 10000,
+                  },
+                  usage: {
+                    action: "execute_tool",
+                    toolName: "weatherAPI",
+                    args: {
+                      params: {
+                        q: "Hanoi,VN",
+                        units: "metric",
+                      },
+                    },
                   },
                 },
 

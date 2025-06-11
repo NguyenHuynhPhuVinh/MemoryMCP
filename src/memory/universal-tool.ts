@@ -63,6 +63,11 @@ export async function handleUniversalMemory(
         message = `Đã tạo tool: ${result.name}`;
         break;
 
+      case "create_api_tool":
+        result = handleCreateApiTool(request);
+        message = `Đã tạo API tool: ${result.name}`;
+        break;
+
       case "execute_tool":
         result = await handleExecuteTool(request);
         message = `Đã thực thi tool thành công`;
@@ -207,6 +212,127 @@ function handleCreateTool(request: UniversalRequest): any {
     request.toolType || ("custom" as MemoryTool["type"]),
     request.parameters || {},
     request.handlerCode
+  );
+}
+
+function handleCreateApiTool(request: UniversalRequest): any {
+  if (!request.toolName || !request.toolDescription || !request.apiUrl) {
+    throw new Error(
+      "toolName, toolDescription và apiUrl là bắt buộc cho action create_api_tool"
+    );
+  }
+
+  const method = request.apiMethod || "GET";
+  const headers = request.apiHeaders || {};
+  const auth = request.apiAuth;
+  const timeout = request.apiTimeout || 5000;
+
+  // Tạo handler code cho API tool
+  const handlerCode = `
+const { ApiFetcher } = await import('../api/api.js');
+
+// Lấy parameters từ args
+const { body, params, customHeaders, customAuth } = args;
+
+// Chuẩn bị request config
+const apiRequest = {
+  url: '${request.apiUrl}',
+  method: '${method}',
+  headers: { ${JSON.stringify(headers)}, ...customHeaders },
+  timeout: ${timeout}
+};
+
+// Thêm body nếu có
+if (body && ['POST', 'PUT', 'PATCH'].includes('${method}')) {
+  apiRequest.body = body;
+}
+
+// Thêm query params nếu có
+if (params) {
+  apiRequest.params = params;
+}
+
+// Xử lý authentication
+${
+  auth
+    ? `
+const authConfig = ${JSON.stringify(auth)};
+if (customAuth) {
+  Object.assign(authConfig, customAuth);
+}
+apiRequest.auth = authConfig;
+`
+    : `
+if (customAuth) {
+  apiRequest.auth = customAuth;
+}
+`
+}
+
+try {
+  // Thực hiện API call
+  const response = await ApiFetcher.fetch(apiRequest);
+
+  return {
+    content: [{
+      type: "text",
+      text: JSON.stringify({
+        success: true,
+        data: response.data,
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        duration: response.duration,
+        url: response.url,
+        method: response.method
+      }, null, 2)
+    }]
+  };
+} catch (error) {
+  return {
+    content: [{
+      type: "text",
+      text: JSON.stringify({
+        success: false,
+        error: error.message,
+        url: '${request.apiUrl}',
+        method: '${method}'
+      }, null, 2)
+    }]
+  };
+}
+`;
+
+  // Tạo parameters schema cho API tool
+  const parameters = {
+    body: {
+      type: "object",
+      description: "Request body (cho POST, PUT, PATCH)",
+      optional: true,
+    },
+    params: {
+      type: "object",
+      description: "Query parameters",
+      optional: true,
+    },
+    customHeaders: {
+      type: "object",
+      description: "Custom headers để override",
+      optional: true,
+    },
+    customAuth: {
+      type: "object",
+      description: "Custom authentication để override",
+      optional: true,
+    },
+  };
+
+  return memoryStorage.createTool(
+    request.toolName,
+    request.toolDescription,
+    "processor",
+    parameters,
+    handlerCode
   );
 }
 
