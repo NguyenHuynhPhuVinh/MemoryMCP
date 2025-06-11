@@ -1,0 +1,41 @@
+{
+  "name": "@tomisakae/memory-mcp",
+  "version": "1.0.0",
+  "description": "Memory MCP Server - Hệ thống lưu trữ và truy xuất thông tin cho AI",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "test-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "npx @modelcontextprotocol/inspector node ./build/index.js",
+    "build": "tsc"
+  },
+  "files": [
+    "build"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomiSakae/test-mcp.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "TomiSakae",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TomiSakae/test-mcp/issues"
+  },
+  "homepage": "https://github.com/TomiSakae/test-mcp#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "axios": "^1.9.0",
+    "zod": "^3.25.23"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}
