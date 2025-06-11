@@ -227,31 +227,28 @@ function handleCreateApiTool(request: UniversalRequest): any {
   const auth = request.apiAuth;
   const timeout = request.apiTimeout || 5000;
 
-  // Tạo handler code cho API tool
+  // Tạo handler code cho API tool sử dụng fetch với Promise
   const handlerCode = `
-// Import axios directly since we can't use top-level await in Function constructor
-const axios = require ? require('axios') : (await import('axios')).default;
-
 // Lấy parameters từ args
 const { body, params, customHeaders, customAuth } = args;
 
-// Chuẩn bị request config
-const apiRequest = {
-  url: '${request.apiUrl}',
-  method: '${method.toLowerCase()}',
-  headers: { ...${JSON.stringify(headers)}, ...(customHeaders || {}) },
-  timeout: ${timeout}
+// Chuẩn bị URL với query parameters
+let url = '${request.apiUrl}';
+if (params && Object.keys(params).length > 0) {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    searchParams.append(key, value.toString());
+  }
+  url += (url.includes('?') ? '&' : '?') + searchParams.toString();
+}
+
+// Chuẩn bị headers
+const fetchHeaders = {
+  'Content-Type': 'application/json',
+  'User-Agent': 'MemoryMCP-APITool',
+  ...${JSON.stringify(headers)},
+  ...(customHeaders || {})
 };
-
-// Thêm body nếu có
-if (body && ['post', 'put', 'patch'].includes('${method.toLowerCase()}')) {
-  apiRequest.data = body;
-}
-
-// Thêm query params nếu có
-if (params) {
-  apiRequest.params = params;
-}
 
 // Xử lý authentication
 ${
@@ -264,89 +261,96 @@ if (customAuth) {
 
 // Apply authentication
 if (authConfig.type === 'bearer' && authConfig.token) {
-  apiRequest.headers['Authorization'] = \`Bearer \${authConfig.token}\`;
+  fetchHeaders['Authorization'] = \`Bearer \${authConfig.token}\`;
 } else if (authConfig.type === 'basic' && authConfig.username && authConfig.password) {
-  const credentials = Buffer.from(\`\${authConfig.username}:\${authConfig.password}\`).toString('base64');
-  apiRequest.headers['Authorization'] = \`Basic \${credentials}\`;
+  const credentials = btoa(\`\${authConfig.username}:\${authConfig.password}\`);
+  fetchHeaders['Authorization'] = \`Basic \${credentials}\`;
 } else if (authConfig.type === 'api-key' && authConfig.apiKey) {
   const headerName = authConfig.apiKeyHeader || 'X-API-Key';
-  apiRequest.headers[headerName] = authConfig.apiKey;
+  fetchHeaders[headerName] = authConfig.apiKey;
 }
 `
     : `
 if (customAuth) {
   // Apply custom authentication
   if (customAuth.type === 'bearer' && customAuth.token) {
-    apiRequest.headers['Authorization'] = \`Bearer \${customAuth.token}\`;
+    fetchHeaders['Authorization'] = \`Bearer \${customAuth.token}\`;
   } else if (customAuth.type === 'basic' && customAuth.username && customAuth.password) {
-    const credentials = Buffer.from(\`\${customAuth.username}:\${customAuth.password}\`).toString('base64');
-    apiRequest.headers['Authorization'] = \`Basic \${credentials}\`;
+    const credentials = btoa(\`\${customAuth.username}:\${customAuth.password}\`);
+    fetchHeaders['Authorization'] = \`Basic \${credentials}\`;
   } else if (customAuth.type === 'api-key' && customAuth.apiKey) {
     const headerName = customAuth.apiKeyHeader || 'X-API-Key';
-    apiRequest.headers[headerName] = customAuth.apiKey;
+    fetchHeaders[headerName] = customAuth.apiKey;
   }
 }
 `
 }
 
-try {
-  const startTime = Date.now();
+// Chuẩn bị fetch options
+const fetchOptions = {
+  method: '${method.toUpperCase()}',
+  headers: fetchHeaders
+};
 
-  // Thực hiện API call với axios
-  const response = await axios(apiRequest);
-  const duration = Date.now() - startTime;
+// Thêm body nếu có và method hỗ trợ
+if (body && ['POST', 'PUT', 'PATCH'].includes('${method.toUpperCase()}')) {
+  fetchOptions.body = JSON.stringify(body);
+}
 
-  return {
-    content: [{
-      type: "text",
-      text: JSON.stringify({
-        success: true,
-        data: response.data,
-        status: response.status,
-        statusText: response.statusText,
-        headers: response.headers,
-        duration: duration,
-        url: '${request.apiUrl}',
-        method: '${method}'
-      }, null, 2)
-    }]
-  };
-} catch (error) {
-  const duration = Date.now() - (startTime || Date.now());
+const startTime = Date.now();
 
-  if (error.response) {
-    // Server responded with error status
-    return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          success: false,
-          data: error.response.data,
-          status: error.response.status,
-          statusText: error.response.statusText,
-          headers: error.response.headers,
-          duration: duration,
-          url: '${request.apiUrl}',
-          method: '${method}'
-        }, null, 2)
-      }]
-    };
-  } else {
-    // Network or other error
+// Tạo timeout promise
+const timeoutPromise = new Promise((_, reject) => {
+  setTimeout(() => reject(new Error('Request timeout after ${timeout}ms')), ${timeout});
+});
+
+// Thực hiện API call với fetch và Promise (với timeout)
+return Promise.race([fetch(url, fetchOptions), timeoutPromise])
+  .then(response => {
+    const duration = Date.now() - startTime;
+
+    // Parse response body
+    return response.text().then(responseText => {
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = responseText;
+      }
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: response.ok,
+            data: responseData,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            duration: duration,
+            url: url,
+            method: '${method.toUpperCase()}'
+          }, null, 2)
+        }]
+      };
+    });
+  })
+  .catch(error => {
+    const duration = Date.now() - startTime;
+
     return {
       content: [{
         type: "text",
         text: JSON.stringify({
           success: false,
           error: error.message,
-          url: '${request.apiUrl}',
-          method: '${method}',
+          url: url,
+          method: '${method.toUpperCase()}',
           duration: duration
         }, null, 2)
       }]
     };
-  }
-}
+  });
 `;
 
   // Tạo parameters schema cho API tool

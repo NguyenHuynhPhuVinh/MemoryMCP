@@ -442,6 +442,14 @@ switch (action) {
                   },
                 },
 
+                fetchApiTool: {
+                  name: "fetchBasedAPI",
+                  description: "Recommended: API tool using fetch with Promise",
+                  type: "processor",
+                  createdWith: "create_tool",
+                  note: "Use create_tool with fetch-based handler code for best compatibility",
+                },
+
                 guidelines: `
 ⚠️ QUAN TRỌNG: Handler code của memory tools PHẢI:
 
@@ -458,6 +466,30 @@ switch (action) {
 3. Sử dụng generateId() để tạo ID unique
 
 4. Xử lý errors properly với try-catch
+
+🚀 KHUYẾN NGHỊ cho API tools:
+
+1. SỬ DỤNG FETCH với PROMISE thay vì async/await:
+   return fetch(url, options)
+     .then(response => response.json().then(data => ({ response, data })))
+     .catch(error => handleError(error));
+
+2. KHÔNG sử dụng async/await trong handler code (sẽ gây lỗi)
+
+3. SỬ DỤNG create_api_tool cho API tools đơn giản
+   SỬ DỤNG create_tool với fetch code cho API tools phức tạp
+
+4. Template fetch code mẫu:
+   const startTime = Date.now();
+   return fetch(url, fetchOptions)
+     .then(response => {
+       const duration = Date.now() - startTime;
+       return response.text().then(text => {
+         let data; try { data = JSON.parse(text); } catch { data = text; }
+         return { content: [{ type: "text", text: JSON.stringify({ success: response.ok, data, status: response.status, duration }, null, 2) }] };
+       });
+     })
+     .catch(error => ({ content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }] }));
               `,
               },
               null,
