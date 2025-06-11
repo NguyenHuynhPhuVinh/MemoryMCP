@@ -7,9 +7,9 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Đường dẫn lưu trữ
-const MEMORY_DIR = path.join(process.cwd(), 'ai-memory');
-const ENTRIES_FILE = path.join(MEMORY_DIR, 'entries.json');
-const TOOLS_FILE = path.join(MEMORY_DIR, 'tools.json');
+const MEMORY_DIR = path.join(process.cwd(), "ai-memory");
+const ENTRIES_FILE = path.join(MEMORY_DIR, "entries.json");
+const TOOLS_FILE = path.join(MEMORY_DIR, "tools.json");
 
 /**
  * Đảm bảo thư mục memory tồn tại
@@ -37,20 +37,20 @@ export class MemoryStorage {
   private loadFromDisk(): void {
     try {
       ensureMemoryDir();
-      
+
       // Load entries
       if (fs.existsSync(ENTRIES_FILE)) {
-        const entriesData = fs.readFileSync(ENTRIES_FILE, 'utf-8');
+        const entriesData = fs.readFileSync(ENTRIES_FILE, "utf-8");
         const entries: MemoryEntry[] = JSON.parse(entriesData);
         for (const entry of entries) {
           this.entries.set(entry.key, entry);
         }
         console.log(`✅ Loaded ${entries.length} memory entries`);
       }
-      
+
       // Load tools
       if (fs.existsSync(TOOLS_FILE)) {
-        const toolsData = fs.readFileSync(TOOLS_FILE, 'utf-8');
+        const toolsData = fs.readFileSync(TOOLS_FILE, "utf-8");
         const tools: MemoryTool[] = JSON.parse(toolsData);
         for (const tool of tools) {
           this.tools.set(tool.id, tool);
@@ -58,7 +58,7 @@ export class MemoryStorage {
         console.log(`✅ Loaded ${tools.length} memory tools`);
       }
     } catch (error) {
-      console.error('❌ Error loading memory data:', error);
+      console.error("❌ Error loading memory data:", error);
     }
   }
 
@@ -68,18 +68,20 @@ export class MemoryStorage {
   private saveToDisk(): void {
     try {
       ensureMemoryDir();
-      
+
       // Save entries
       const entries = Array.from(this.entries.values());
       fs.writeFileSync(ENTRIES_FILE, JSON.stringify(entries, null, 2));
-      
+
       // Save tools
       const tools = Array.from(this.tools.values());
       fs.writeFileSync(TOOLS_FILE, JSON.stringify(tools, null, 2));
-      
-      console.log(`💾 Saved ${entries.length} entries and ${tools.length} tools`);
+
+      console.log(
+        `💾 Saved ${entries.length} entries and ${tools.length} tools`
+      );
     } catch (error) {
-      console.error('❌ Error saving memory data:', error);
+      console.error("❌ Error saving memory data:", error);
     }
   }
 
@@ -88,7 +90,13 @@ export class MemoryStorage {
   /**
    * Store thông tin
    */
-  store(key: string, value: any, type: MemoryEntry['type'] = 'text', description?: string, tags?: string[]): MemoryEntry {
+  store(
+    key: string,
+    value: any,
+    type: MemoryEntry["type"] = "text",
+    description?: string,
+    tags?: string[]
+  ): MemoryEntry {
     const now = new Date().toISOString();
     const entry: MemoryEntry = {
       id: generateId(),
@@ -100,12 +108,12 @@ export class MemoryStorage {
       createdAt: now,
       updatedAt: now,
       accessCount: 0,
-      lastAccessed: now
+      lastAccessed: now,
     };
-    
+
     this.entries.set(key, entry);
     this.saveToDisk();
-    
+
     return entry;
   }
 
@@ -126,15 +134,20 @@ export class MemoryStorage {
   /**
    * Update thông tin
    */
-  update(key: string, value: any, description?: string, tags?: string[]): MemoryEntry | null {
+  update(
+    key: string,
+    value: any,
+    description?: string,
+    tags?: string[]
+  ): MemoryEntry | null {
     const entry = this.entries.get(key);
     if (!entry) return null;
-    
+
     entry.value = value;
     entry.updatedAt = new Date().toISOString();
     if (description !== undefined) entry.description = description;
     if (tags !== undefined) entry.tags = tags;
-    
+
     this.saveToDisk();
     return entry;
   }
@@ -156,21 +169,27 @@ export class MemoryStorage {
   search(query: string, limit: number = 10): MemoryEntry[] {
     const results: MemoryEntry[] = [];
     const queryLower = query.toLowerCase();
-    
+
     for (const entry of this.entries.values()) {
-      const matches = 
+      const matches =
         entry.key.toLowerCase().includes(queryLower) ||
-        (entry.description && entry.description.toLowerCase().includes(queryLower)) ||
-        (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(queryLower))) ||
-        (typeof entry.value === 'string' && entry.value.toLowerCase().includes(queryLower));
-      
+        (entry.description &&
+          entry.description.toLowerCase().includes(queryLower)) ||
+        (entry.tags &&
+          entry.tags.some((tag) => tag.toLowerCase().includes(queryLower))) ||
+        (typeof entry.value === "string" &&
+          entry.value.toLowerCase().includes(queryLower));
+
       if (matches) {
         results.push(entry);
       }
     }
-    
+
     return results
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )
       .slice(0, limit);
   }
 
@@ -178,8 +197,24 @@ export class MemoryStorage {
    * List tất cả entries
    */
   listEntries(): MemoryEntry[] {
-    return Array.from(this.entries.values())
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    return Array.from(this.entries.values()).sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  /**
+   * Clear tất cả entries
+   */
+  clearAllEntries(): { cleared: number; timestamp: string } {
+    const count = this.entries.size;
+    this.entries.clear();
+    this.saveToDisk();
+
+    return {
+      cleared: count,
+      timestamp: new Date().toISOString(),
+    };
   }
 
   // ========== TOOL OPERATIONS ==========
@@ -187,7 +222,13 @@ export class MemoryStorage {
   /**
    * Create memory tool
    */
-  createTool(name: string, description: string, type: MemoryTool['type'], parameters: Record<string, any>, handlerCode: string): MemoryTool {
+  createTool(
+    name: string,
+    description: string,
+    type: MemoryTool["type"],
+    parameters: Record<string, any>,
+    handlerCode: string
+  ): MemoryTool {
     const tool: MemoryTool = {
       id: generateId(),
       name,
@@ -196,12 +237,12 @@ export class MemoryStorage {
       parameters,
       handlerCode,
       createdAt: new Date().toISOString(),
-      usageCount: 0
+      usageCount: 0,
     };
-    
+
     this.tools.set(tool.id, tool);
     this.saveToDisk();
-    
+
     return tool;
   }
 
@@ -213,23 +254,27 @@ export class MemoryStorage {
     if (!tool) {
       throw new Error(`Tool với ID '${toolId}' không tồn tại`);
     }
-    
+
     try {
       // Update usage stats
       tool.usageCount++;
       this.saveToDisk();
-      
+
       // Create function từ handler code với memory storage context
       const handlerFunction = new Function(
-        'args', 'storage', 'generateId',
+        "args",
+        "storage",
+        "generateId",
         tool.handlerCode
       );
-      
+
       // Execute với context
       const result = await handlerFunction(args, this, generateId);
       return result;
     } catch (error) {
-      throw new Error(`Lỗi khi thực thi tool '${tool.name}': ${(error as Error).message}`);
+      throw new Error(
+        `Lỗi khi thực thi tool '${tool.name}': ${(error as Error).message}`
+      );
     }
   }
 
@@ -240,14 +285,14 @@ export class MemoryStorage {
     // Try by ID first
     let tool = this.tools.get(identifier);
     if (tool) return tool;
-    
+
     // Try by name
     for (const t of this.tools.values()) {
       if (t.name === identifier) {
         return t;
       }
     }
-    
+
     return null;
   }
 
@@ -255,8 +300,10 @@ export class MemoryStorage {
    * List tools
    */
   listTools(): MemoryTool[] {
-    return Array.from(this.tools.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Array.from(this.tools.values()).sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   /**
@@ -270,49 +317,87 @@ export class MemoryStorage {
     return deleted;
   }
 
+  /**
+   * Clear tất cả tools
+   */
+  clearAllTools(): { cleared: number; timestamp: string } {
+    const count = this.tools.size;
+    this.tools.clear();
+    this.saveToDisk();
+
+    return {
+      cleared: count,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Reset toàn bộ hệ thống (xóa cả entries và tools)
+   */
+  resetAll(): {
+    entriesCleared: number;
+    toolsCleared: number;
+    timestamp: string;
+  } {
+    const entriesCount = this.entries.size;
+    const toolsCount = this.tools.size;
+
+    this.entries.clear();
+    this.tools.clear();
+    this.saveToDisk();
+
+    return {
+      entriesCleared: entriesCount,
+      toolsCleared: toolsCount,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   // ========== ANALYSIS OPERATIONS ==========
 
   /**
    * Analyze memory data
    */
-  analyze(type: 'summary' | 'count' | 'trends' | 'relationships'): any {
+  analyze(type: "summary" | "count" | "trends" | "relationships"): any {
     const entries = this.listEntries();
     const tools = this.listTools();
-    
+
     switch (type) {
-      case 'summary':
+      case "summary":
         return {
           totalEntries: entries.length,
           totalTools: tools.length,
           totalSize: JSON.stringify(entries).length,
-          mostAccessedEntry: entries.sort((a, b) => b.accessCount - a.accessCount)[0],
+          mostAccessedEntry: entries.sort(
+            (a, b) => b.accessCount - a.accessCount
+          )[0],
           mostUsedTool: tools.sort((a, b) => b.usageCount - a.usageCount)[0],
-          typeDistribution: this.getTypeDistribution(entries)
+          typeDistribution: this.getTypeDistribution(entries),
         };
-        
-      case 'count':
+
+      case "count":
         return {
           entries: entries.length,
           tools: tools.length,
           byType: this.getTypeDistribution(entries),
-          byToolType: this.getToolTypeDistribution(tools)
+          byToolType: this.getToolTypeDistribution(tools),
         };
-        
-      case 'trends':
+
+      case "trends":
         return {
           recentEntries: entries.slice(0, 10),
           recentTools: tools.slice(0, 5),
-          accessTrends: this.getAccessTrends(entries)
+          accessTrends: this.getAccessTrends(entries),
         };
-        
-      case 'relationships':
+
+      case "relationships":
         return {
           tagRelationships: this.getTagRelationships(entries),
-          keyPatterns: this.getKeyPatterns(entries)
+          keyPatterns: this.getKeyPatterns(entries),
         };
-        
+
       default:
-        return { error: 'Unknown analysis type' };
+        return { error: "Unknown analysis type" };
     }
   }
 
@@ -336,7 +421,11 @@ export class MemoryStorage {
     return entries
       .sort((a, b) => b.accessCount - a.accessCount)
       .slice(0, 10)
-      .map(e => ({ key: e.key, accessCount: e.accessCount, lastAccessed: e.lastAccessed }));
+      .map((e) => ({
+        key: e.key,
+        accessCount: e.accessCount,
+        lastAccessed: e.lastAccessed,
+      }));
   }
 
   private getTagRelationships(entries: MemoryEntry[]): Record<string, number> {
@@ -362,7 +451,7 @@ export class MemoryStorage {
       }
     }
     return Object.entries(patterns)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
       .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
   }

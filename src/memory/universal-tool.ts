@@ -93,6 +93,21 @@ export async function handleUniversalMemory(
         message = `Nhập dữ liệu thành công`;
         break;
 
+      case "clear_all":
+        result = handleClearAll(request);
+        message = `Đã xóa sạch ${result.cleared} entries`;
+        break;
+
+      case "clear_tools":
+        result = handleClearTools(request);
+        message = `Đã xóa sạch ${result.cleared} tools`;
+        break;
+
+      case "reset":
+        result = handleReset(request);
+        message = `Đã reset hệ thống: ${result.entriesCleared} entries và ${result.toolsCleared} tools`;
+        break;
+
       default:
         throw new Error(`Action không hợp lệ: ${request.action}`);
     }
@@ -317,4 +332,16 @@ function handleImport(request: UniversalRequest): any {
   } catch (error) {
     throw new Error(`Lỗi khi import: ${(error as Error).message}`);
   }
+}
+
+function handleClearAll(request: UniversalRequest): any {
+  return memoryStorage.clearAllEntries();
+}
+
+function handleClearTools(request: UniversalRequest): any {
+  return memoryStorage.clearAllTools();
+}
+
+function handleReset(request: UniversalRequest): any {
+  return memoryStorage.resetAll();
 }

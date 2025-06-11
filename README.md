@@ -22,20 +22,26 @@ Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory`
 ### 📝 Actions có sẵn:
 
 #### Memory Operations:
+
 - `store`: Lưu trữ thông tin
 - `retrieve`: Truy xuất thông tin
 - `search`: Tìm kiếm thông tin
 - `list`: Liệt kê tất cả entries
 - `delete`: Xóa thông tin
 - `update`: Cập nhật thông tin
+- `clear_all`: Xóa sạch tất cả entries
+- `reset`: Reset toàn bộ hệ thống
 
 #### Tool Operations:
+
 - `create_tool`: Tạo tool tùy chỉnh
 - `execute_tool`: Thực thi tool bằng ID/name
 - `list_tools`: Liệt kê tất cả tools
 - `delete_tool`: Xóa tool
+- `clear_tools`: Xóa sạch tất cả tools
 
 #### Analysis & Data:
+
 - `analyze`: Phân tích dữ liệu
 - `export`: Xuất dữ liệu
 - `import`: Nhập dữ liệu
@@ -43,6 +49,7 @@ Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory`
 ## 💡 Ví dụ sử dụng
 
 ### 1. Lưu trữ thông tin cơ bản
+
 ```
 Tool: universalMemory
 Parameters:
@@ -55,6 +62,7 @@ Parameters:
 ```
 
 ### 2. Truy xuất thông tin
+
 ```
 Tool: universalMemory
 Parameters:
@@ -63,6 +71,7 @@ Parameters:
 ```
 
 ### 3. Tìm kiếm thông tin
+
 ```
 Tool: universalMemory
 Parameters:
@@ -72,6 +81,7 @@ Parameters:
 ```
 
 ### 4. Tạo tool tùy chỉnh để quản lý ghi chú
+
 ```
 Tool: universalMemory
 Parameters:
@@ -88,6 +98,7 @@ Parameters:
 ```
 
 ### 5. Sử dụng tool vừa tạo
+
 ```
 Tool: universalMemory
 Parameters:
@@ -97,6 +108,7 @@ Parameters:
 ```
 
 ### 6. Phân tích dữ liệu
+
 ```
 Tool: universalMemory
 Parameters:
@@ -104,15 +116,41 @@ Parameters:
 - analysisType: "summary"
 ```
 
+### 7. Xóa sạch tất cả entries
+
+```
+Tool: universalMemory
+Parameters:
+- action: "clear_all"
+```
+
+### 8. Xóa sạch tất cả tools
+
+```
+Tool: universalMemory
+Parameters:
+- action: "clear_tools"
+```
+
+### 9. Reset toàn bộ hệ thống
+
+```
+Tool: universalMemory
+Parameters:
+- action: "reset"
+```
+
 ## 🛠️ Cài đặt và sử dụng
 
 ### Cài đặt
+
 ```bash
 npm install
 npm run build
 ```
 
 ### Chạy server
+
 ```bash
 # Development với MCP inspector
 npm run dev
@@ -122,7 +160,9 @@ npm start
 ```
 
 ### Cấu hình với Claude Desktop
+
 Thêm vào `claude_desktop_config.json`:
+
 ```json
 {
   "mcpServers": {
@@ -137,6 +177,7 @@ Thêm vào `claude_desktop_config.json`:
 ## 📁 Cấu trúc dữ liệu
 
 Dữ liệu được lưu trong thư mục `ai-memory/`:
+
 ```
 ai-memory/
 ├── entries.json    # Tất cả memory entries
@@ -146,21 +187,25 @@ ai-memory/
 ## 🎯 Use Cases
 
 ### 1. Personal Knowledge Base
+
 - Lưu trữ thông tin cá nhân
 - Ghi chú và ý tưởng
 - Bookmarks và references
 
 ### 2. Project Management
+
 - Task tracking
 - Project notes
 - Team information
 
 ### 3. Learning & Research
+
 - Study notes
 - Research findings
 - Learning progress
 
 ### 4. AI Workflow Automation
+
 - Custom tools cho tasks cụ thể
 - Data processing pipelines
 - Automated reporting
@@ -168,21 +213,27 @@ ai-memory/
 ## 🔧 Advanced Features
 
 ### Custom Tools
+
 Tạo tools riêng với JavaScript code để:
+
 - Xử lý dữ liệu phức tạp
 - Tích hợp với external APIs
 - Automation workflows
 - Data analysis
 
 ### Analytics
+
 Phân tích patterns và trends:
+
 - Usage statistics
 - Access patterns
 - Data relationships
 - Performance metrics
 
 ### Export/Import
+
 Backup và migrate dữ liệu:
+
 - JSON format cho full backup
 - CSV format cho analysis
 - TXT format cho human-readable

@@ -10,54 +10,78 @@ import { UniversalRequest } from "../types/index.js";
  * Đăng ký Universal Memory Tool
  */
 export function registerMemoryServer(server: McpServer) {
-  
   // 🚀 UNIVERSAL MEMORY TOOL - Tool duy nhất để rule them all!
   server.tool(
     "universalMemory",
     "Universal tool để lưu trữ, truy xuất và quản lý tất cả thông tin cho AI",
     {
-      action: z.enum([
-        "store",           // Lưu trữ thông tin
-        "retrieve",        // Truy xuất thông tin  
-        "search",          // Tìm kiếm thông tin
-        "list",            // Liệt kê tất cả
-        "delete",          // Xóa thông tin
-        "update",          // Cập nhật thông tin
-        "create_tool",     // Tạo tool mới
-        "execute_tool",    // Thực thi tool
-        "list_tools",      // Liệt kê tools
-        "delete_tool",     // Xóa tool
-        "analyze",         // Phân tích dữ liệu
-        "export",          // Xuất dữ liệu
-        "import"           // Nhập dữ liệu
-      ]).describe("Hành động cần thực hiện"),
-      
+      action: z
+        .enum([
+          "store", // Lưu trữ thông tin
+          "retrieve", // Truy xuất thông tin
+          "search", // Tìm kiếm thông tin
+          "list", // Liệt kê tất cả
+          "delete", // Xóa thông tin
+          "update", // Cập nhật thông tin
+          "create_tool", // Tạo tool mới
+          "execute_tool", // Thực thi tool
+          "list_tools", // Liệt kê tools
+          "delete_tool", // Xóa tool
+          "analyze", // Phân tích dữ liệu
+          "export", // Xuất dữ liệu
+          "import", // Nhập dữ liệu
+          "clear_all", // Xóa sạch tất cả entries
+          "clear_tools", // Xóa sạch tất cả tools
+          "reset", // Reset toàn bộ hệ thống
+        ])
+        .describe("Hành động cần thực hiện"),
+
       // For memory operations
       key: z.string().optional().describe("Key để lưu trữ/truy xuất thông tin"),
-      value: z.any().optional().describe("Giá trị cần lưu trữ (có thể là text, object, array, number...)"),
-      type: z.enum(["text", "json", "list", "counter", "custom"]).optional().describe("Loại dữ liệu"),
+      value: z
+        .any()
+        .optional()
+        .describe(
+          "Giá trị cần lưu trữ (có thể là text, object, array, number...)"
+        ),
+      type: z
+        .enum(["text", "json", "list", "counter", "custom"])
+        .optional()
+        .describe("Loại dữ liệu"),
       description: z.string().optional().describe("Mô tả về thông tin này"),
       tags: z.array(z.string()).optional().describe("Tags để phân loại"),
-      
+
       // For search
       query: z.string().optional().describe("Từ khóa tìm kiếm"),
       limit: z.number().optional().describe("Số lượng kết quả tối đa"),
-      
+
       // For tools
       toolName: z.string().optional().describe("Tên tool"),
       toolId: z.string().optional().describe("ID của tool"),
       toolDescription: z.string().optional().describe("Mô tả tool"),
-      toolType: z.enum(["storage", "retrieval", "processor", "analyzer"]).optional().describe("Loại tool"),
+      toolType: z
+        .enum(["storage", "retrieval", "processor", "analyzer"])
+        .optional()
+        .describe("Loại tool"),
       parameters: z.record(z.any()).optional().describe("Parameters của tool"),
-      handlerCode: z.string().optional().describe("JavaScript code để xử lý tool"),
+      handlerCode: z
+        .string()
+        .optional()
+        .describe("JavaScript code để xử lý tool"),
       args: z.record(z.any()).optional().describe("Arguments để thực thi tool"),
-      
+
       // For analysis
-      analysisType: z.enum(["summary", "count", "trends", "relationships"]).optional().describe("Loại phân tích"),
-      
+      analysisType: z
+        .enum(["summary", "count", "trends", "relationships"])
+        .optional()
+        .describe("Loại phân tích"),
+
       // For export/import
-      format: z.enum(["json", "csv", "txt"]).optional().describe("Format dữ liệu"),
-      data: z.any().optional().describe("Dữ liệu để import")
+      format: z
+        .enum(["json", "csv", "txt"])
+        .optional()
+        .describe("Format dữ liệu"),
+      data: z.any().optional().describe("Dữ liệu để import"),
     },
     async (params) => {
       try {
@@ -80,52 +104,61 @@ export function registerMemoryServer(server: McpServer) {
           args: params.args,
           analysisType: params.analysisType,
           format: params.format,
-          data: params.data
+          data: params.data,
         };
-        
+
         // Thực thi universal tool
         const result = await handleUniversalMemory(request);
-        
+
         // Xử lý đặc biệt cho execute_tool - trả về kết quả trực tiếp
         if (params.action === "execute_tool" && result.success) {
           // Nếu tool trả về MCP format, sử dụng trực tiếp
-          if (result.data && typeof result.data === 'object' && result.data.content) {
+          if (
+            result.data &&
+            typeof result.data === "object" &&
+            result.data.content
+          ) {
             return result.data;
           }
-          
+
           // Nếu không, wrap trong MCP format
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result.data, null, 2)
-              }
-            ]
+                text: JSON.stringify(result.data, null, 2),
+              },
+            ],
           };
         }
-        
+
         // Cho các actions khác, trả về format Universal Tool
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2)
-            }
-          ]
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
         };
-        
       } catch (error: unknown) {
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({
-                success: false,
-                error: `Lỗi trong universalMemory: ${(error as Error).message}`,
-                timestamp: new Date().toISOString()
-              }, null, 2)
-            }
-          ]
+              text: JSON.stringify(
+                {
+                  success: false,
+                  error: `Lỗi trong universalMemory: ${
+                    (error as Error).message
+                  }`,
+                  timestamp: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+            },
+          ],
         };
       }
     }
@@ -158,14 +191,17 @@ Chỉ cần sử dụng **1 tool duy nhất**: \`universalMemory\`
 - **retrieve**: Truy xuất thông tin
 - **search**: Tìm kiếm thông tin
 - **list**: Liệt kê tất cả
-- **delete**: Xóa thông tin  
+- **delete**: Xóa thông tin
 - **update**: Cập nhật thông tin
+- **clear_all**: Xóa sạch tất cả entries
+- **reset**: Reset toàn bộ hệ thống
 
 #### Tool Operations:
 - **create_tool**: Tạo tool tùy chỉnh
 - **execute_tool**: Thực thi tool bằng ID/name
 - **list_tools**: Liệt kê tất cả tools
 - **delete_tool**: Xóa tool
+- **clear_tools**: Xóa sạch tất cả tools
 
 #### Analysis & Data:
 - **analyze**: Phân tích dữ liệu
@@ -203,9 +239,9 @@ universalMemory(action: "execute_tool", toolName: "notekeeper", args: {...})
 - 🛠️ **Custom Tools**: Tạo tools riêng cho workflow
 - 📤 **Export/Import**: Backup và restore dữ liệu
 
-Hãy bắt đầu với \`universalMemory\` để khám phá tất cả tính năng! 🚀`
-          }
-        ]
+Hãy bắt đầu với \`universalMemory\` để khám phá tất cả tính năng! 🚀`,
+          },
+        ],
       };
     }
   );
@@ -220,19 +256,26 @@ Hãy bắt đầu với \`universalMemory\` để khám phá tất cả tính n�
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              examples: {
-                notekeeper: {
-                  name: "notekeeper",
-                  description: "Tool để lưu và quản lý ghi chú",
-                  type: "storage",
-                  parameters: {
-                    action: { type: "string", description: "add, get, list, delete" },
-                    title: { type: "string", description: "Tiêu đề ghi chú" },
-                    content: { type: "string", description: "Nội dung ghi chú" },
-                    id: { type: "string", description: "ID ghi chú" }
-                  },
-                  handlerCode: `
+            text: JSON.stringify(
+              {
+                examples: {
+                  notekeeper: {
+                    name: "notekeeper",
+                    description: "Tool để lưu và quản lý ghi chú",
+                    type: "storage",
+                    parameters: {
+                      action: {
+                        type: "string",
+                        description: "add, get, list, delete",
+                      },
+                      title: { type: "string", description: "Tiêu đề ghi chú" },
+                      content: {
+                        type: "string",
+                        description: "Nội dung ghi chú",
+                      },
+                      id: { type: "string", description: "ID ghi chú" },
+                    },
+                    handlerCode: `
 const { action, title, content, id } = args;
 
 switch (action) {
@@ -257,20 +300,26 @@ switch (action) {
   default:
     return { content: [{ type: "text", text: JSON.stringify({ error: "Action không hợp lệ" }, null, 2) }] };
 }
-`
-                },
-                
-                taskTracker: {
-                  name: "taskTracker", 
-                  description: "Tool theo dõi công việc",
-                  type: "processor",
-                  parameters: {
-                    action: { type: "string", description: "add, complete, list, stats" },
-                    task: { type: "string", description: "Mô tả công việc" },
-                    priority: { type: "string", description: "high, medium, low" },
-                    id: { type: "string", description: "ID công việc" }
+`,
                   },
-                  handlerCode: `
+
+                  taskTracker: {
+                    name: "taskTracker",
+                    description: "Tool theo dõi công việc",
+                    type: "processor",
+                    parameters: {
+                      action: {
+                        type: "string",
+                        description: "add, complete, list, stats",
+                      },
+                      task: { type: "string", description: "Mô tả công việc" },
+                      priority: {
+                        type: "string",
+                        description: "high, medium, low",
+                      },
+                      id: { type: "string", description: "ID công việc" },
+                    },
+                    handlerCode: `
 const { action, task, priority, id } = args;
 
 switch (action) {
@@ -317,11 +366,11 @@ switch (action) {
   default:
     return { content: [{ type: "text", text: JSON.stringify({ error: "Action không hợp lệ" }, null, 2) }] };
 }
-`
-                }
-              },
-              
-              guidelines: `
+`,
+                  },
+                },
+
+                guidelines: `
 ⚠️ QUAN TRỌNG: Handler code của memory tools PHẢI:
 
 1. Trả về MCP format:
@@ -337,10 +386,13 @@ switch (action) {
 3. Sử dụng generateId() để tạo ID unique
 
 4. Xử lý errors properly với try-catch
-              `
-            }, null, 2)
-          }
-        ]
+              `,
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     }
   );
