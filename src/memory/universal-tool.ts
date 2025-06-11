@@ -229,7 +229,8 @@ function handleCreateApiTool(request: UniversalRequest): any {
 
   // Tạo handler code cho API tool
   const handlerCode = `
-const { ApiFetcher } = await import('../api/api.js');
+// Import axios directly since we can't use top-level await in Function constructor
+const axios = require ? require('axios') : (await import('axios')).default;
 
 // Lấy parameters từ args
 const { body, params, customHeaders, customAuth } = args;
@@ -237,14 +238,14 @@ const { body, params, customHeaders, customAuth } = args;
 // Chuẩn bị request config
 const apiRequest = {
   url: '${request.apiUrl}',
-  method: '${method}',
-  headers: { ${JSON.stringify(headers)}, ...customHeaders },
+  method: '${method.toLowerCase()}',
+  headers: { ...${JSON.stringify(headers)}, ...(customHeaders || {}) },
   timeout: ${timeout}
 };
 
 // Thêm body nếu có
-if (body && ['POST', 'PUT', 'PATCH'].includes('${method}')) {
-  apiRequest.body = body;
+if (body && ['post', 'put', 'patch'].includes('${method.toLowerCase()}')) {
+  apiRequest.data = body;
 }
 
 // Thêm query params nếu có
@@ -260,18 +261,40 @@ const authConfig = ${JSON.stringify(auth)};
 if (customAuth) {
   Object.assign(authConfig, customAuth);
 }
-apiRequest.auth = authConfig;
+
+// Apply authentication
+if (authConfig.type === 'bearer' && authConfig.token) {
+  apiRequest.headers['Authorization'] = \`Bearer \${authConfig.token}\`;
+} else if (authConfig.type === 'basic' && authConfig.username && authConfig.password) {
+  const credentials = Buffer.from(\`\${authConfig.username}:\${authConfig.password}\`).toString('base64');
+  apiRequest.headers['Authorization'] = \`Basic \${credentials}\`;
+} else if (authConfig.type === 'api-key' && authConfig.apiKey) {
+  const headerName = authConfig.apiKeyHeader || 'X-API-Key';
+  apiRequest.headers[headerName] = authConfig.apiKey;
+}
 `
     : `
 if (customAuth) {
-  apiRequest.auth = customAuth;
+  // Apply custom authentication
+  if (customAuth.type === 'bearer' && customAuth.token) {
+    apiRequest.headers['Authorization'] = \`Bearer \${customAuth.token}\`;
+  } else if (customAuth.type === 'basic' && customAuth.username && customAuth.password) {
+    const credentials = Buffer.from(\`\${customAuth.username}:\${customAuth.password}\`).toString('base64');
+    apiRequest.headers['Authorization'] = \`Basic \${credentials}\`;
+  } else if (customAuth.type === 'api-key' && customAuth.apiKey) {
+    const headerName = customAuth.apiKeyHeader || 'X-API-Key';
+    apiRequest.headers[headerName] = customAuth.apiKey;
+  }
 }
 `
 }
 
 try {
-  // Thực hiện API call
-  const response = await ApiFetcher.fetch(apiRequest);
+  const startTime = Date.now();
+
+  // Thực hiện API call với axios
+  const response = await axios(apiRequest);
+  const duration = Date.now() - startTime;
 
   return {
     content: [{
@@ -282,24 +305,47 @@ try {
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,
-        duration: response.duration,
-        url: response.url,
-        method: response.method
-      }, null, 2)
-    }]
-  };
-} catch (error) {
-  return {
-    content: [{
-      type: "text",
-      text: JSON.stringify({
-        success: false,
-        error: error.message,
+        duration: duration,
         url: '${request.apiUrl}',
         method: '${method}'
       }, null, 2)
     }]
   };
+} catch (error) {
+  const duration = Date.now() - (startTime || Date.now());
+
+  if (error.response) {
+    // Server responded with error status
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          success: false,
+          data: error.response.data,
+          status: error.response.status,
+          statusText: error.response.statusText,
+          headers: error.response.headers,
+          duration: duration,
+          url: '${request.apiUrl}',
+          method: '${method}'
+        }, null, 2)
+      }]
+    };
+  } else {
+    // Network or other error
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          success: false,
+          error: error.message,
+          url: '${request.apiUrl}',
+          method: '${method}',
+          duration: duration
+        }, null, 2)
+      }]
+    };
+  }
 }
 `;
 
