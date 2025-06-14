@@ -93,7 +93,9 @@ export function registerUniversalMemoryTool(server: McpServer) {
       firebaseBackendUrl: z
         .string()
         .optional()
-        .describe("URL của Firebase backend (mặc định: http://localhost:3001)"),
+        .describe(
+          "URL của Firebase backend (mặc định: https://tominw.vercel.app/)"
+        ),
     },
     async (params) => {
       try {

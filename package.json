@@ -1,6 +1,6 @@
 {
   "name": "@tomisakae/tominetwork",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "TomiNetwork - Hệ thống quản lý thông tin và công cụ thông minh cho AI",
   "main": "index.js",
   "type": "module",

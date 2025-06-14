@@ -12,14 +12,14 @@ export class FirebaseHelpers {
    * Check if tags contain "public" or "firebase"
    */
   static isFirebaseEnabled(tags?: string[]): boolean {
-    return tags ? (tags.includes("public") || tags.includes("firebase")) : false;
+    return tags ? tags.includes("public") || tags.includes("firebase") : false;
   }
 
   /**
    * Get Firebase backend URL from request
    */
   static getBackendUrl(request: UniversalRequest): string {
-    return request.firebaseBackendUrl || "http://localhost:3001";
+    return request.firebaseBackendUrl || "https://tominw.vercel.app/";
   }
 
   /**
@@ -30,7 +30,9 @@ export class FirebaseHelpers {
   ): Promise<any | null> {
     try {
       const backendUrl = this.getBackendUrl(request);
-      const firebaseData = await FirebaseOperations.listFirebaseData(backendUrl);
+      const firebaseData = await FirebaseOperations.listFirebaseData(
+        backendUrl
+      );
       const firebaseMemory = firebaseData.data.memories.find(
         (m: any) => m.key === request.key
       );
@@ -57,7 +59,9 @@ export class FirebaseHelpers {
   ): Promise<{ success: boolean; message: string }> {
     try {
       const backendUrl = this.getBackendUrl(request);
-      const firebaseData = await FirebaseOperations.listFirebaseData(backendUrl);
+      const firebaseData = await FirebaseOperations.listFirebaseData(
+        backendUrl
+      );
       const firebaseMemory = firebaseData.data.memories.find(
         (m: any) => m.key === request.key
       );
@@ -71,13 +75,19 @@ export class FirebaseHelpers {
         if (response.ok) {
           return { success: true, message: "Đã xóa Firebase" };
         } else {
-          return { success: false, message: `Lỗi xóa Firebase: ${response.statusText}` };
+          return {
+            success: false,
+            message: `Lỗi xóa Firebase: ${response.statusText}`,
+          };
         }
       } else {
         return { success: false, message: "Không tìm thấy trên Firebase" };
       }
     } catch (error) {
-      return { success: false, message: `Lỗi xóa Firebase: ${(error as Error).message}` };
+      return {
+        success: false,
+        message: `Lỗi xóa Firebase: ${(error as Error).message}`,
+      };
     }
   }
 
@@ -89,7 +99,9 @@ export class FirebaseHelpers {
   ): Promise<{ success: boolean; message: string }> {
     try {
       const backendUrl = this.getBackendUrl(request);
-      const firebaseData = await FirebaseOperations.listFirebaseData(backendUrl);
+      const firebaseData = await FirebaseOperations.listFirebaseData(
+        backendUrl
+      );
       const firebaseTool = firebaseData.data.tools.find(
         (t: any) => t.id === request.toolId || t.name === request.toolName
       );
@@ -103,13 +115,19 @@ export class FirebaseHelpers {
         if (response.ok) {
           return { success: true, message: "Đã xóa tool Firebase" };
         } else {
-          return { success: false, message: `Lỗi xóa tool Firebase: ${response.statusText}` };
+          return {
+            success: false,
+            message: `Lỗi xóa tool Firebase: ${response.statusText}`,
+          };
         }
       } else {
         return { success: false, message: "Không tìm thấy tool trên Firebase" };
       }
     } catch (error) {
-      return { success: false, message: `Lỗi xóa tool Firebase: ${(error as Error).message}` };
+      return {
+        success: false,
+        message: `Lỗi xóa tool Firebase: ${(error as Error).message}`,
+      };
     }
   }
 

@@ -5,7 +5,7 @@ import { UniversalRequest, MemoryEntry, MemoryTool } from "../types/index.js";
 import { memoryCore } from "../core/memory-core.js";
 
 // Default Firebase backend URL
-const DEFAULT_FIREBASE_BACKEND = "http://localhost:3001";
+const DEFAULT_FIREBASE_BACKEND = "https://tominw.vercel.app/";
 
 /**
  * Firebase Operations Handler
