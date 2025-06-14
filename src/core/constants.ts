@@ -108,7 +108,7 @@ export const TOMINETWORK_SERVER = {
  * Tool names
  */
 export const TOOL_NAMES = {
-  UNIVERSAL_MEMORY: "universalMemory_TomiNetwork",
+  UNIVERSAL_MEMORY: "TomiNetwork",
   INTRODUCTION: "introduction_TomiNetwork",
   GET_EXAMPLES: "getMemoryToolExamples_TomiNetwork",
 } as const;

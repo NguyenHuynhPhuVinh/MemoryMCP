@@ -39,12 +39,12 @@ export async function handleUniversalMemory(
 
       case "search":
         result = handleSearch(request);
-        message = `Tìm thấy ${result.length} kết quả cho: ${request.query}`;
+        message = `Tìm thấy ${result.totalFound} kết quả cho: ${request.query}`;
         break;
 
       case "list":
         result = handleList(request);
-        message = `Liệt kê ${result.length} entries`;
+        message = `Liệt kê ${result.total} entries`;
         break;
 
       case "delete":

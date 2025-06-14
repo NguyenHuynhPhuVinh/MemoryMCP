@@ -15,7 +15,7 @@
 
 ## 🚀 Universal TomiNetwork Tool
 
-Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory_TomiNetwork`
+Chỉ cần sử dụng **1 tool duy nhất**: `TomiNetwork`
 
 ### 📝 Actions có sẵn:
 
@@ -44,7 +44,7 @@ Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory_TomiNetwork`
 ### 1. Lưu trữ thông tin cơ bản
 
 ```
-Tool: universalMemory_TomiNetwork
+Tool: TomiNetwork
 Parameters:
 - action: "store"
 - key: "user_preferences"
@@ -57,7 +57,7 @@ Parameters:
 ### 2. Truy xuất thông tin
 
 ```
-Tool: universalMemory_TomiNetwork
+Tool: TomiNetwork
 Parameters:
 - action: "retrieve"
 - key: "user_preferences"
@@ -66,7 +66,7 @@ Parameters:
 ### 3. Tìm kiếm thông tin
 
 ```
-Tool: universalMemory_TomiNetwork
+Tool: TomiNetwork
 Parameters:
 - action: "search"
 - query: "user"
@@ -76,7 +76,7 @@ Parameters:
 ### 4. Tạo tool tùy chỉnh để quản lý ghi chú
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "create_tool"
 - toolName: "notekeeper"
@@ -93,7 +93,7 @@ Parameters:
 ### 5. Tạo API tool để fetch dữ liệu
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "create_api_tool"
 - toolName: "weatherAPI"
@@ -112,7 +112,7 @@ Parameters:
 ### 6. Sử dụng tool vừa tạo
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "execute_tool"
 - toolName: "notekeeper"
@@ -122,7 +122,7 @@ Parameters:
 ### 7. Sử dụng API tool
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "execute_tool"
 - toolName: "weatherAPI"
@@ -134,7 +134,7 @@ Parameters:
 ### 8. Xóa sạch tất cả entries
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "clear_all"
 ```
@@ -142,7 +142,7 @@ Parameters:
 ### 9. Xóa sạch tất cả tools
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "clear_tools"
 ```
@@ -150,7 +150,7 @@ Parameters:
 ### 10. Reset toàn bộ hệ thống
 
 ```
-Tool: universalMemory
+Tool: TomiNetwork
 Parameters:
 - action: "reset"
 ```
