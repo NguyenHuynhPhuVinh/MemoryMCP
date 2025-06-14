@@ -10,6 +10,7 @@ import { memoryCore } from "../core/memory-core.js";
 import { MemoryOperations } from "../modules/memory-operations.js";
 import { ToolOperations } from "../modules/tool-operations.js";
 import { SearchOperations } from "../modules/search-operations.js";
+import { FirebaseOperations } from "../modules/firebase-operations.js";
 
 /**
  * Universal Memory Tool Handler
@@ -26,8 +27,9 @@ export async function handleUniversalMemory(
 
     switch (request.action) {
       case "store":
-        result = handleStore(request);
-        message = `Đã lưu trữ thông tin với key: ${request.key}`;
+        result = await handleStore(request);
+        message =
+          result.message || `Đã lưu trữ thông tin với key: ${request.key}`;
         break;
 
       case "retrieve":
@@ -43,8 +45,8 @@ export async function handleUniversalMemory(
         break;
 
       case "list":
-        result = handleList(request);
-        message = `Liệt kê ${result.total} entries`;
+        result = handleList();
+        message = `Liệt kê ${result.length} entries`;
         break;
 
       case "delete":
@@ -62,8 +64,8 @@ export async function handleUniversalMemory(
         break;
 
       case "create_tool":
-        result = handleCreateTool(request);
-        message = `Đã tạo tool: ${result.name}`;
+        result = await handleCreateTool(request);
+        message = result.message || `Đã tạo tool: ${result.name}`;
         break;
 
       case "create_api_tool":
@@ -132,8 +134,33 @@ export async function handleUniversalMemory(
 
 // ========== HANDLER FUNCTIONS ==========
 
-function handleStore(request: UniversalRequest): any {
-  return MemoryOperations.store(request);
+async function handleStore(request: UniversalRequest): Promise<any> {
+  // Store locally first
+  const localResult = MemoryOperations.store(request);
+
+  // If has "public" tag, also sync to Firebase
+  if (isPublic(request.tags)) {
+    try {
+      const backendUrl = getFirebaseBackendUrl(request);
+      await FirebaseOperations.syncMemoryToFirebase(request, backendUrl);
+      return {
+        ...localResult,
+        firebaseSync: true,
+        message: `Memory đã được lưu local và sync lên Firebase`,
+      };
+    } catch (error) {
+      return {
+        ...localResult,
+        firebaseSync: false,
+        firebaseError: (error as Error).message,
+        message: `Memory đã được lưu local nhưng lỗi sync Firebase: ${
+          (error as Error).message
+        }`,
+      };
+    }
+  }
+
+  return localResult;
 }
 
 function handleRetrieve(request: UniversalRequest): any {
@@ -144,7 +171,7 @@ function handleSearch(request: UniversalRequest): any {
   return SearchOperations.search(request);
 }
 
-function handleList(request: UniversalRequest): any {
+function handleList(): any {
   return SearchOperations.listEntries();
 }
 
@@ -156,8 +183,39 @@ function handleUpdate(request: UniversalRequest): any {
   return MemoryOperations.update(request);
 }
 
-function handleCreateTool(request: UniversalRequest): any {
-  return ToolOperations.createTool(request);
+async function handleCreateTool(request: UniversalRequest): Promise<any> {
+  // Create tool locally first
+  const localResult = ToolOperations.createTool(request);
+
+  // If has "public" tag, also sync to Firebase
+  if (isPublic(request.tags)) {
+    try {
+      const backendUrl = getFirebaseBackendUrl(request);
+      await FirebaseOperations.syncToolToFirebase(
+        {
+          ...request,
+          toolId: localResult.id,
+        },
+        backendUrl
+      );
+      return {
+        ...localResult,
+        firebaseSync: true,
+        message: `Tool đã được tạo local và sync lên Firebase`,
+      };
+    } catch (error) {
+      return {
+        ...localResult,
+        firebaseSync: false,
+        firebaseError: (error as Error).message,
+        message: `Tool đã được tạo local nhưng lỗi sync Firebase: ${
+          (error as Error).message
+        }`,
+      };
+    }
+  }
+
+  return localResult;
 }
 
 function handleCreateApiTool(request: UniversalRequest): any {
@@ -165,7 +223,33 @@ function handleCreateApiTool(request: UniversalRequest): any {
 }
 
 async function handleExecuteTool(request: UniversalRequest): Promise<any> {
-  return await ToolOperations.executeTool(request);
+  // First try to execute local tool
+  const localTool = memoryCore.getTool(request.toolId!);
+
+  if (localTool) {
+    // Execute local tool
+    return await ToolOperations.executeTool(request);
+  } else {
+    // Tool not found locally, try Firebase if toolId looks like Firebase ID
+    try {
+      const backendUrl = getFirebaseBackendUrl(request);
+      return await FirebaseOperations.executeFirebaseTool(
+        {
+          ...request,
+          firebaseId: request.toolId,
+        },
+        backendUrl
+      );
+    } catch (error) {
+      throw new Error(
+        `Tool '${
+          request.toolId
+        }' không tồn tại local và không thể thực thi từ Firebase: ${
+          (error as Error).message
+        }`
+      );
+    }
+  }
 }
 
 function handleListTools(): any {
@@ -186,4 +270,20 @@ function handleClearTools(): any {
 
 function handleReset(): any {
   return memoryCore.resetAll();
+}
+
+// ========== FIREBASE HELPER FUNCTIONS ==========
+
+/**
+ * Check if tags contain "public"
+ */
+function isPublic(tags?: string[]): boolean {
+  return tags ? tags.includes("public") : false;
+}
+
+/**
+ * Get Firebase backend URL
+ */
+function getFirebaseBackendUrl(request: UniversalRequest): string {
+  return request.firebaseBackendUrl || "http://localhost:3001";
 }

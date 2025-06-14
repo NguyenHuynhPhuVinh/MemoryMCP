@@ -56,11 +56,11 @@ export function registerUniversalMemoryTool(server: McpServer) {
         .enum(["storage", "retrieval", "processor", "analyzer"])
         .optional()
         .describe("Loại tool"),
-      parameters: z
-        .record(z.any())
+      parameters: z.record(z.any()).optional().describe("Parameters của tool"),
+      handlerCode: z
+        .string()
         .optional()
-        .describe("Parameters của tool"),
-      handlerCode: z.string().optional().describe("JavaScript code để xử lý tool"),
+        .describe("JavaScript code để xử lý tool"),
       args: z.record(z.any()).optional().describe("Arguments để thực thi tool"),
 
       // API tool operations
@@ -88,6 +88,12 @@ export function registerUniversalMemoryTool(server: McpServer) {
         .number()
         .optional()
         .describe("Timeout cho API request (ms)"),
+
+      // Firebase operations (tự động dựa trên tag "public")
+      firebaseBackendUrl: z
+        .string()
+        .optional()
+        .describe("URL của Firebase backend (mặc định: http://localhost:3001)"),
     },
     async (params) => {
       try {
@@ -113,6 +119,7 @@ export function registerUniversalMemoryTool(server: McpServer) {
           apiHeaders: params.apiHeaders,
           apiAuth: params.apiAuth,
           apiTimeout: params.apiTimeout,
+          firebaseBackendUrl: params.firebaseBackendUrl,
         };
 
         // Gọi universal handler

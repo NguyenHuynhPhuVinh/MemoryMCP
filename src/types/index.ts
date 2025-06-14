@@ -90,6 +90,10 @@ export interface UniversalRequest {
     apiKeyHeader?: string;
   };
   apiTimeout?: number;
+
+  // For Firebase operations
+  firebaseId?: string;
+  firebaseBackendUrl?: string;
 }
 
 /**
