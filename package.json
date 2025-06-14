@@ -1,11 +1,11 @@
 {
-  "name": "@tomisakae/memory-mcp",
-  "version": "1.0.4",
-  "description": "Memory MCP Server - Hệ thống lưu trữ và truy xuất thông tin cho AI",
+  "name": "@tomisakae/tominetwork",
+  "version": "0.0.1",
+  "description": "TomiNetwork - Hệ thống quản lý thông tin và công cụ thông minh cho AI",
   "main": "index.js",
   "type": "module",
   "bin": {
-    "test-mcp": "./build/index.js"
+    "tominetwork": "./build/index.js"
   },
   "scripts": {
     "start": "node index.js",
@@ -17,18 +17,21 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TomiSakae/test-mcp.git"
+    "url": "git+https://github.com/TomiSakae/tominetwork.git"
   },
   "keywords": [
     "mcp",
-    "model-context-protocol"
+    "model-context-protocol",
+    "ai-tools",
+    "memory-management",
+    "tominetwork"
   ],
   "author": "TomiSakae",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/TomiSakae/test-mcp/issues"
+    "url": "https://github.com/TomiSakae/tominetwork/issues"
   },
-  "homepage": "https://github.com/TomiSakae/test-mcp#readme",
+  "homepage": "https://github.com/TomiSakae/tominetwork#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "axios": "^1.9.0",

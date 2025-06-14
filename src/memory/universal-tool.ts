@@ -1,12 +1,15 @@
 /**
- * Universal Memory Tool - Tool duy nhất để quản lý tất cả memory operations
+ * Universal TomiNetwork Tool - Tool duy nhất để quản lý tất cả operations
  */
 import {
   MemoryTool,
   UniversalRequest,
   UniversalResponse,
 } from "../types/index.js";
-import { memoryStorage } from "./storage.js";
+import { memoryCore } from "../core/memory-core.js";
+import { MemoryOperations } from "../modules/memory-operations.js";
+import { ToolOperations } from "../modules/tool-operations.js";
+import { SearchOperations } from "../modules/search-operations.js";
 
 /**
  * Universal Memory Tool Handler
@@ -74,7 +77,7 @@ export async function handleUniversalMemory(
         break;
 
       case "list_tools":
-        result = handleListTools(request);
+        result = handleListTools();
         message = `Liệt kê ${result.length} tools`;
         break;
 
@@ -83,33 +86,18 @@ export async function handleUniversalMemory(
         message = result ? `Đã xóa tool` : `Không tìm thấy tool để xóa`;
         break;
 
-      case "analyze":
-        result = handleAnalyze(request);
-        message = `Phân tích dữ liệu hoàn tất`;
-        break;
-
-      case "export":
-        result = handleExport(request);
-        message = `Xuất dữ liệu thành công`;
-        break;
-
-      case "import":
-        result = handleImport(request);
-        message = `Nhập dữ liệu thành công`;
-        break;
-
       case "clear_all":
-        result = handleClearAll(request);
+        result = handleClearAll();
         message = `Đã xóa sạch ${result.cleared} entries`;
         break;
 
       case "clear_tools":
-        result = handleClearTools(request);
+        result = handleClearTools();
         message = `Đã xóa sạch ${result.cleared} tools`;
         break;
 
       case "reset":
-        result = handleReset(request);
+        result = handleReset();
         message = `Đã reset hệ thống: ${result.entriesCleared} entries và ${result.toolsCleared} tools`;
         break;
 
@@ -145,379 +133,57 @@ export async function handleUniversalMemory(
 // ========== HANDLER FUNCTIONS ==========
 
 function handleStore(request: UniversalRequest): any {
-  if (!request.key || request.value === undefined) {
-    throw new Error("key và value là bắt buộc cho action store");
-  }
-
-  return memoryStorage.store(
-    request.key,
-    request.value,
-    request.type || "text",
-    request.description,
-    request.tags
-  );
+  return MemoryOperations.store(request);
 }
 
 function handleRetrieve(request: UniversalRequest): any {
-  if (!request.key) {
-    throw new Error("key là bắt buộc cho action retrieve");
-  }
-
-  return memoryStorage.retrieve(request.key);
+  return MemoryOperations.retrieve(request);
 }
 
 function handleSearch(request: UniversalRequest): any {
-  if (!request.query) {
-    throw new Error("query là bắt buộc cho action search");
-  }
-
-  return memoryStorage.search(request.query, request.limit || 10);
+  return SearchOperations.search(request);
 }
 
 function handleList(request: UniversalRequest): any {
-  return memoryStorage.listEntries();
+  return SearchOperations.listEntries();
 }
 
 function handleDelete(request: UniversalRequest): any {
-  if (!request.key) {
-    throw new Error("key là bắt buộc cho action delete");
-  }
-
-  return memoryStorage.delete(request.key);
+  return MemoryOperations.delete(request);
 }
 
 function handleUpdate(request: UniversalRequest): any {
-  if (!request.key || request.value === undefined) {
-    throw new Error("key và value là bắt buộc cho action update");
-  }
-
-  return memoryStorage.update(
-    request.key,
-    request.value,
-    request.description,
-    request.tags
-  );
+  return MemoryOperations.update(request);
 }
 
 function handleCreateTool(request: UniversalRequest): any {
-  if (!request.toolName || !request.toolDescription || !request.handlerCode) {
-    throw new Error(
-      "toolName, toolDescription và handlerCode là bắt buộc cho action create_tool"
-    );
-  }
-
-  return memoryStorage.createTool(
-    request.toolName,
-    request.toolDescription,
-    request.toolType || ("custom" as MemoryTool["type"]),
-    request.parameters || {},
-    request.handlerCode
-  );
+  return ToolOperations.createTool(request);
 }
 
 function handleCreateApiTool(request: UniversalRequest): any {
-  if (!request.toolName || !request.toolDescription || !request.apiUrl) {
-    throw new Error(
-      "toolName, toolDescription và apiUrl là bắt buộc cho action create_api_tool"
-    );
-  }
-
-  const method = request.apiMethod || "GET";
-  const headers = request.apiHeaders || {};
-  const auth = request.apiAuth;
-  const timeout = request.apiTimeout || 5000;
-
-  // Tạo handler code cho API tool sử dụng fetch với Promise
-  const handlerCode = `
-// Lấy parameters từ args
-const { body, params, customHeaders, customAuth } = args;
-
-// Chuẩn bị URL với query parameters
-let url = '${request.apiUrl}';
-if (params && Object.keys(params).length > 0) {
-  const searchParams = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    searchParams.append(key, value.toString());
-  }
-  url += (url.includes('?') ? '&' : '?') + searchParams.toString();
-}
-
-// Chuẩn bị headers
-const fetchHeaders = {
-  'Content-Type': 'application/json',
-  'User-Agent': 'MemoryMCP-APITool',
-  ...${JSON.stringify(headers)},
-  ...(customHeaders || {})
-};
-
-// Xử lý authentication
-${
-  auth
-    ? `
-const authConfig = ${JSON.stringify(auth)};
-if (customAuth) {
-  Object.assign(authConfig, customAuth);
-}
-
-// Apply authentication
-if (authConfig.type === 'bearer' && authConfig.token) {
-  fetchHeaders['Authorization'] = \`Bearer \${authConfig.token}\`;
-} else if (authConfig.type === 'basic' && authConfig.username && authConfig.password) {
-  const credentials = btoa(\`\${authConfig.username}:\${authConfig.password}\`);
-  fetchHeaders['Authorization'] = \`Basic \${credentials}\`;
-} else if (authConfig.type === 'api-key' && authConfig.apiKey) {
-  const headerName = authConfig.apiKeyHeader || 'X-API-Key';
-  fetchHeaders[headerName] = authConfig.apiKey;
-}
-`
-    : `
-if (customAuth) {
-  // Apply custom authentication
-  if (customAuth.type === 'bearer' && customAuth.token) {
-    fetchHeaders['Authorization'] = \`Bearer \${customAuth.token}\`;
-  } else if (customAuth.type === 'basic' && customAuth.username && customAuth.password) {
-    const credentials = btoa(\`\${customAuth.username}:\${customAuth.password}\`);
-    fetchHeaders['Authorization'] = \`Basic \${credentials}\`;
-  } else if (customAuth.type === 'api-key' && customAuth.apiKey) {
-    const headerName = customAuth.apiKeyHeader || 'X-API-Key';
-    fetchHeaders[headerName] = customAuth.apiKey;
-  }
-}
-`
-}
-
-// Chuẩn bị fetch options
-const fetchOptions = {
-  method: '${method.toUpperCase()}',
-  headers: fetchHeaders
-};
-
-// Thêm body nếu có và method hỗ trợ
-if (body && ['POST', 'PUT', 'PATCH'].includes('${method.toUpperCase()}')) {
-  fetchOptions.body = JSON.stringify(body);
-}
-
-const startTime = Date.now();
-
-// Tạo timeout promise
-const timeoutPromise = new Promise((_, reject) => {
-  setTimeout(() => reject(new Error('Request timeout after ${timeout}ms')), ${timeout});
-});
-
-// Thực hiện API call với fetch và Promise (với timeout)
-return Promise.race([fetch(url, fetchOptions), timeoutPromise])
-  .then(response => {
-    const duration = Date.now() - startTime;
-
-    // Parse response body
-    return response.text().then(responseText => {
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        responseData = responseText;
-      }
-
-      return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            success: response.ok,
-            data: responseData,
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries()),
-            duration: duration,
-            url: url,
-            method: '${method.toUpperCase()}'
-          }, null, 2)
-        }]
-      };
-    });
-  })
-  .catch(error => {
-    const duration = Date.now() - startTime;
-
-    return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({
-          success: false,
-          error: error.message,
-          url: url,
-          method: '${method.toUpperCase()}',
-          duration: duration
-        }, null, 2)
-      }]
-    };
-  });
-`;
-
-  // Tạo parameters schema cho API tool
-  const parameters = {
-    body: {
-      type: "object",
-      description: "Request body (cho POST, PUT, PATCH)",
-      optional: true,
-    },
-    params: {
-      type: "object",
-      description: "Query parameters",
-      optional: true,
-    },
-    customHeaders: {
-      type: "object",
-      description: "Custom headers để override",
-      optional: true,
-    },
-    customAuth: {
-      type: "object",
-      description: "Custom authentication để override",
-      optional: true,
-    },
-  };
-
-  return memoryStorage.createTool(
-    request.toolName,
-    request.toolDescription,
-    "processor",
-    parameters,
-    handlerCode
-  );
+  return ToolOperations.createApiTool(request);
 }
 
 async function handleExecuteTool(request: UniversalRequest): Promise<any> {
-  if (!request.toolId && !request.toolName) {
-    throw new Error("toolId hoặc toolName là bắt buộc cho action execute_tool");
-  }
-
-  let toolId = request.toolId;
-  if (!toolId && request.toolName) {
-    const tool = memoryStorage.getTool(request.toolName);
-    if (!tool) {
-      throw new Error(`Tool '${request.toolName}' không tồn tại`);
-    }
-    toolId = tool.id;
-  }
-
-  return await memoryStorage.executeTool(toolId!, request.args || {});
+  return await ToolOperations.executeTool(request);
 }
 
-function handleListTools(request: UniversalRequest): any {
-  return memoryStorage.listTools();
+function handleListTools(): any {
+  return ToolOperations.listTools();
 }
 
 function handleDeleteTool(request: UniversalRequest): any {
-  if (!request.toolId && !request.toolName) {
-    throw new Error("toolId hoặc toolName là bắt buộc cho action delete_tool");
-  }
-
-  let toolId = request.toolId;
-  if (!toolId && request.toolName) {
-    const tool = memoryStorage.getTool(request.toolName);
-    if (!tool) return false;
-    toolId = tool.id;
-  }
-
-  return memoryStorage.deleteTool(toolId!);
+  return ToolOperations.deleteTool(request);
 }
 
-function handleAnalyze(request: UniversalRequest): any {
-  const analysisType = request.analysisType || "summary";
-  return memoryStorage.analyze(analysisType);
+function handleClearAll(): any {
+  return MemoryOperations.clearAll();
 }
 
-function handleExport(request: UniversalRequest): any {
-  const format = request.format || "json";
-  const entries = memoryStorage.listEntries();
-  const tools = memoryStorage.listTools();
-
-  const data = {
-    entries,
-    tools,
-    exportedAt: new Date().toISOString(),
-    version: "1.0",
-  };
-
-  switch (format) {
-    case "json":
-      return data;
-
-    case "csv":
-      // Simple CSV export for entries
-      const csvHeaders = "key,type,description,createdAt,accessCount\n";
-      const csvRows = entries
-        .map(
-          (e) =>
-            `"${e.key}","${e.type}","${e.description || ""}","${e.createdAt}",${
-              e.accessCount
-            }`
-        )
-        .join("\n");
-      return csvHeaders + csvRows;
-
-    case "txt":
-      return entries
-        .map(
-          (e) =>
-            `${e.key}: ${
-              typeof e.value === "string" ? e.value : JSON.stringify(e.value)
-            }`
-        )
-        .join("\n\n");
-
-    default:
-      throw new Error(`Format không hỗ trợ: ${format}`);
-  }
+function handleClearTools(): any {
+  return ToolOperations.clearAllTools();
 }
 
-function handleImport(request: UniversalRequest): any {
-  if (!request.data) {
-    throw new Error("data là bắt buộc cho action import");
-  }
-
-  const format = request.format || "json";
-  let imported = 0;
-
-  try {
-    if (format === "json") {
-      const data =
-        typeof request.data === "string"
-          ? JSON.parse(request.data)
-          : request.data;
-
-      if (data.entries && Array.isArray(data.entries)) {
-        for (const entry of data.entries) {
-          memoryStorage.store(
-            entry.key,
-            entry.value,
-            entry.type || "text",
-            entry.description,
-            entry.tags
-          );
-          imported++;
-        }
-      }
-    }
-
-    return {
-      imported,
-      format,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    throw new Error(`Lỗi khi import: ${(error as Error).message}`);
-  }
-}
-
-function handleClearAll(request: UniversalRequest): any {
-  return memoryStorage.clearAllEntries();
-}
-
-function handleClearTools(request: UniversalRequest): any {
-  return memoryStorage.clearAllTools();
-}
-
-function handleReset(request: UniversalRequest): any {
-  return memoryStorage.resetAll();
+function handleReset(): any {
+  return memoryCore.resetAll();
 }

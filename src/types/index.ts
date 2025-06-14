@@ -47,9 +47,6 @@ export type UniversalAction =
   | "execute_tool" // Thực thi tool
   | "list_tools" // Liệt kê tools
   | "delete_tool" // Xóa tool
-  | "analyze" // Phân tích dữ liệu
-  | "export" // Xuất dữ liệu
-  | "import" // Nhập dữ liệu
   | "clear_all" // Xóa sạch tất cả entries
   | "clear_tools" // Xóa sạch tất cả tools
   | "reset"; // Reset toàn bộ hệ thống
@@ -79,13 +76,6 @@ export interface UniversalRequest {
   parameters?: Record<string, any>;
   handlerCode?: string;
   args?: Record<string, any>;
-
-  // For analysis
-  analysisType?: "summary" | "count" | "trends" | "relationships";
-
-  // For export/import
-  format?: "json" | "csv" | "txt";
-  data?: any;
 
   // For API tool creation
   apiUrl?: string;

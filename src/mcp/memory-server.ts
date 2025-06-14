@@ -1,18 +1,19 @@
 /**
- * Memory MCP Server - Server chuyên về lưu trữ và truy xuất thông tin cho AI
+ * TomiNetwork MCP Server - Server quản lý thông tin và công cụ thông minh cho AI
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { handleUniversalMemory } from "../memory/universal-tool.js";
 import { UniversalRequest } from "../types/index.js";
+import { TOOL_NAMES } from "../core/constants.js";
 
 /**
- * Đăng ký Universal Memory Tool
+ * Đăng ký TomiNetwork Tools
  */
 export function registerMemoryServer(server: McpServer) {
-  // 🚀 UNIVERSAL MEMORY TOOL - Tool duy nhất để rule them all!
+  // 🚀 UNIVERSAL TOMINETWORK TOOL - Tool duy nhất để rule them all!
   server.tool(
-    "universalMemory",
+    TOOL_NAMES.UNIVERSAL_MEMORY,
     "Universal tool để lưu trữ, truy xuất và quản lý tất cả thông tin cho AI",
     {
       action: z
@@ -28,9 +29,6 @@ export function registerMemoryServer(server: McpServer) {
           "execute_tool", // Thực thi tool
           "list_tools", // Liệt kê tools
           "delete_tool", // Xóa tool
-          "analyze", // Phân tích dữ liệu
-          "export", // Xuất dữ liệu
-          "import", // Nhập dữ liệu
           "clear_all", // Xóa sạch tất cả entries
           "clear_tools", // Xóa sạch tất cả tools
           "reset", // Reset toàn bộ hệ thống
@@ -70,19 +68,6 @@ export function registerMemoryServer(server: McpServer) {
         .optional()
         .describe("JavaScript code để xử lý tool"),
       args: z.record(z.any()).optional().describe("Arguments để thực thi tool"),
-
-      // For analysis
-      analysisType: z
-        .enum(["summary", "count", "trends", "relationships"])
-        .optional()
-        .describe("Loại phân tích"),
-
-      // For export/import
-      format: z
-        .enum(["json", "csv", "txt"])
-        .optional()
-        .describe("Format dữ liệu"),
-      data: z.any().optional().describe("Dữ liệu để import"),
 
       // For API tool creation
       apiUrl: z.string().optional().describe("URL của API endpoint"),
@@ -129,9 +114,6 @@ export function registerMemoryServer(server: McpServer) {
           parameters: params.parameters,
           handlerCode: params.handlerCode,
           args: params.args,
-          analysisType: params.analysisType,
-          format: params.format,
-          data: params.data,
           apiUrl: params.apiUrl,
           apiMethod: params.apiMethod,
           apiHeaders: params.apiHeaders,
@@ -196,25 +178,25 @@ export function registerMemoryServer(server: McpServer) {
     }
   );
 
-  // Tool giới thiệu về Memory MCP
+  // Tool giới thiệu về TomiNetwork
   server.tool(
-    "introduction",
-    "Giới thiệu về Memory MCP Server",
+    TOOL_NAMES.INTRODUCTION,
+    "Giới thiệu về TomiNetwork",
     {},
     async () => {
       return {
         content: [
           {
             type: "text",
-            text: `# 🧠 Memory MCP Server
+            text: `# 🌐 TomiNetwork
 
 ## Giới thiệu
 
-Memory MCP Server là một hệ thống lưu trữ và truy xuất thông tin chuyên dụng cho AI.
+TomiNetwork là một hệ thống quản lý thông tin và công cụ thông minh cho AI.
 
-## 🚀 Universal Memory Tool
+## 🚀 Universal TomiNetwork Tool
 
-Chỉ cần sử dụng **1 tool duy nhất**: \`universalMemory\`
+Chỉ cần sử dụng **1 tool duy nhất**: \`universalMemory_TomiNetwork\`
 
 ### 📝 Các Actions có sẵn:
 
@@ -236,36 +218,31 @@ Chỉ cần sử dụng **1 tool duy nhất**: \`universalMemory\`
 - **delete_tool**: Xóa tool
 - **clear_tools**: Xóa sạch tất cả tools
 
-#### Analysis & Data:
-- **analyze**: Phân tích dữ liệu
-- **export**: Xuất dữ liệu
-- **import**: Nhập dữ liệu
-
 ## 💡 Ví dụ sử dụng:
 
 ### Lưu trữ thông tin:
 \`\`\`
-universalMemory(action: "store", key: "user_preferences", value: {...}, type: "json")
+universalMemory_TomiNetwork(action: "store", key: "user_preferences", value: {...}, type: "json")
 \`\`\`
 
 ### Truy xuất thông tin:
 \`\`\`
-universalMemory(action: "retrieve", key: "user_preferences")
+universalMemory_TomiNetwork(action: "retrieve", key: "user_preferences")
 \`\`\`
 
 ### Tạo tool tùy chỉnh:
 \`\`\`
-universalMemory(action: "create_tool", toolName: "notekeeper", ...)
+universalMemory_TomiNetwork(action: "create_tool", toolName: "notekeeper", ...)
 \`\`\`
 
 ### Tạo API tool:
 \`\`\`
-universalMemory(action: "create_api_tool", toolName: "weatherAPI", apiUrl: "https://api.weather.com/v1/current", apiMethod: "GET", apiHeaders: {"X-API-Key": "your-key"})
+universalMemory_TomiNetwork(action: "create_api_tool", toolName: "weatherAPI", apiUrl: "https://api.weather.com/v1/current", apiMethod: "GET", apiHeaders: {"X-API-Key": "your-key"})
 \`\`\`
 
 ### Thực thi tool:
 \`\`\`
-universalMemory(action: "execute_tool", toolName: "notekeeper", args: {...})
+universalMemory_TomiNetwork(action: "execute_tool", toolName: "notekeeper", args: {...})
 \`\`\`
 
 ## ✨ Tính năng:
@@ -273,21 +250,20 @@ universalMemory(action: "execute_tool", toolName: "notekeeper", args: {...})
 - 💾 **Persistent Storage**: Dữ liệu được lưu trên disk
 - 🔍 **Full-text Search**: Tìm kiếm trong tất cả dữ liệu
 - 🏷️ **Tags & Metadata**: Phân loại và quản lý
-- 📊 **Analytics**: Phân tích usage và trends
 - 🛠️ **Custom Tools**: Tạo tools riêng cho workflow
-- 📤 **Export/Import**: Backup và restore dữ liệu
+- 🔄 **Hot Operations**: Tất cả operations không cần restart
 
-Hãy bắt đầu với \`universalMemory\` để khám phá tất cả tính năng! 🚀`,
+Hãy bắt đầu với \`universalMemory_TomiNetwork\` để khám phá tất cả tính năng! 🚀`,
           },
         ],
       };
     }
   );
 
-  // Tool để lấy examples về cách tạo memory tools
+  // Tool để lấy examples về cách tạo TomiNetwork tools
   server.tool(
-    "getMemoryToolExamples",
-    "Lấy examples về cách tạo memory tools đúng cách",
+    TOOL_NAMES.GET_EXAMPLES,
+    "Lấy examples về cách tạo TomiNetwork tools đúng cách",
     {},
     async () => {
       return {

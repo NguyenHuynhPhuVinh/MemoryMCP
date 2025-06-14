@@ -1,8 +1,8 @@
-# 🧠 Memory MCP Server
+# 🌐 TomiNetwork
 
 ## 🎯 Giới thiệu
 
-**Memory MCP Server** là một hệ thống lưu trữ và truy xuất thông tin chuyên dụng cho AI, được xây dựng trên Model Context Protocol (MCP).
+**TomiNetwork** là một hệ thống quản lý thông tin và công cụ thông minh cho AI, được xây dựng trên Model Context Protocol (MCP).
 
 ## ✨ Tính năng chính
 
@@ -11,13 +11,11 @@
 - 🔍 **Full-text Search**: Tìm kiếm thông minh trong tất cả dữ liệu
 - 🏷️ **Tags & Metadata**: Phân loại và quản lý thông tin
 - 🛠️ **Custom Tools**: Tạo tools riêng cho workflow cụ thể
-- 📊 **Analytics**: Phân tích usage patterns và trends
-- 📤 **Export/Import**: Backup và restore dữ liệu
 - 🔄 **Hot Operations**: Tất cả operations không cần restart
 
-## 🚀 Universal Memory Tool
+## 🚀 Universal TomiNetwork Tool
 
-Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory`
+Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory_TomiNetwork`
 
 ### 📝 Actions có sẵn:
 
@@ -41,18 +39,12 @@ Chỉ cần sử dụng **1 tool duy nhất**: `universalMemory`
 - `delete_tool`: Xóa tool
 - `clear_tools`: Xóa sạch tất cả tools
 
-#### Analysis & Data:
-
-- `analyze`: Phân tích dữ liệu
-- `export`: Xuất dữ liệu
-- `import`: Nhập dữ liệu
-
 ## 💡 Ví dụ sử dụng
 
 ### 1. Lưu trữ thông tin cơ bản
 
 ```
-Tool: universalMemory
+Tool: universalMemory_TomiNetwork
 Parameters:
 - action: "store"
 - key: "user_preferences"
@@ -65,7 +57,7 @@ Parameters:
 ### 2. Truy xuất thông tin
 
 ```
-Tool: universalMemory
+Tool: universalMemory_TomiNetwork
 Parameters:
 - action: "retrieve"
 - key: "user_preferences"
@@ -74,7 +66,7 @@ Parameters:
 ### 3. Tìm kiếm thông tin
 
 ```
-Tool: universalMemory
+Tool: universalMemory_TomiNetwork
 Parameters:
 - action: "search"
 - query: "user"
@@ -139,16 +131,7 @@ Parameters:
   }
 ```
 
-### 8. Phân tích dữ liệu
-
-```
-Tool: universalMemory
-Parameters:
-- action: "analyze"
-- analysisType: "summary"
-```
-
-### 9. Xóa sạch tất cả entries
+### 8. Xóa sạch tất cả entries
 
 ```
 Tool: universalMemory
@@ -156,7 +139,7 @@ Parameters:
 - action: "clear_all"
 ```
 
-### 10. Xóa sạch tất cả tools
+### 9. Xóa sạch tất cả tools
 
 ```
 Tool: universalMemory
@@ -164,7 +147,7 @@ Parameters:
 - action: "clear_tools"
 ```
 
-### 11. Reset toàn bộ hệ thống
+### 10. Reset toàn bộ hệ thống
 
 ```
 Tool: universalMemory
@@ -265,30 +248,13 @@ Tạo API tools nhanh chóng với template có sẵn:
 - **Error handling**: Xử lý lỗi tự động
 - **Response formatting**: Format response theo MCP standard
 
-### Analytics
-
-Phân tích patterns và trends:
-
-- Usage statistics
-- Access patterns
-- Data relationships
-- Performance metrics
-
-### Export/Import
-
-Backup và migrate dữ liệu:
-
-- JSON format cho full backup
-- CSV format cho analysis
-- TXT format cho human-readable
-
 ## 🎉 Lợi ích
 
 1. **Đơn giản**: Chỉ 1 tool để làm tất cả
 2. **Mạnh mẽ**: Lưu trữ mọi loại dữ liệu
 3. **Linh hoạt**: Tạo tools riêng cho nhu cầu cụ thể
 4. **Bền vững**: Dữ liệu persistent trên disk
-5. **Thông minh**: Search và analytics tích hợp
+5. **Thông minh**: Full-text search tích hợp
 6. **Mở rộng**: Dễ dàng thêm tính năng mới
 
 Memory MCP Server - Biến AI thành một trợ lý có trí nhớ vĩnh viễn! 🧠✨

@@ -1,29 +1,30 @@
 /**
- * Memory Storage System - Hệ thống lưu trữ thông tin cho AI
+ * Memory Core - Tập trung các functionality chính của Memory MCP
  */
-import { MemoryEntry, MemoryTool } from "../types/index.js";
+import { MemoryEntry, MemoryTool, UniversalAction } from "../types/index.js";
 import { generateId } from "../utils/helpers.js";
+import { STORAGE_PATHS } from "./constants.js";
 import * as fs from "fs";
 import * as path from "path";
 
 // Đường dẫn lưu trữ
-const MEMORY_DIR = path.join(process.cwd(), "ai-memory");
-const ENTRIES_FILE = path.join(MEMORY_DIR, "entries.json");
-const TOOLS_FILE = path.join(MEMORY_DIR, "tools.json");
+const DATA_DIR = path.join(process.cwd(), STORAGE_PATHS.DATA_DIR);
+const MEMORY_FILE = path.join(DATA_DIR, STORAGE_PATHS.MEMORY_FILE);
+const TOOLS_FILE = path.join(DATA_DIR, STORAGE_PATHS.TOOLS_FILE);
 
 /**
- * Đảm bảo thư mục memory tồn tại
+ * Đảm bảo thư mục data tồn tại
  */
-function ensureMemoryDir(): void {
-  if (!fs.existsSync(MEMORY_DIR)) {
-    fs.mkdirSync(MEMORY_DIR, { recursive: true });
+function ensureDataDir(): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
 /**
- * Memory Storage Class
+ * Memory Core Class - Quản lý tất cả memory operations
  */
-export class MemoryStorage {
+export class MemoryCore {
   private entries: Map<string, MemoryEntry> = new Map();
   private tools: Map<string, MemoryTool> = new Map();
 
@@ -31,16 +32,18 @@ export class MemoryStorage {
     this.loadFromDisk();
   }
 
+  // ========== LIFECYCLE METHODS ==========
+
   /**
    * Load data từ disk
    */
   private loadFromDisk(): void {
     try {
-      ensureMemoryDir();
+      ensureDataDir();
 
       // Load entries
-      if (fs.existsSync(ENTRIES_FILE)) {
-        const entriesData = fs.readFileSync(ENTRIES_FILE, "utf-8");
+      if (fs.existsSync(MEMORY_FILE)) {
+        const entriesData = fs.readFileSync(MEMORY_FILE, "utf-8");
         const entries: MemoryEntry[] = JSON.parse(entriesData);
         for (const entry of entries) {
           this.entries.set(entry.key, entry);
@@ -58,7 +61,7 @@ export class MemoryStorage {
         console.log(`✅ Loaded ${tools.length} memory tools`);
       }
     } catch (error) {
-      console.error("❌ Error loading memory data:", error);
+      console.error("❌ Error loading TomiNetwork data:", error);
     }
   }
 
@@ -67,11 +70,11 @@ export class MemoryStorage {
    */
   private saveToDisk(): void {
     try {
-      ensureMemoryDir();
+      ensureDataDir();
 
       // Save entries
       const entries = Array.from(this.entries.values());
-      fs.writeFileSync(ENTRIES_FILE, JSON.stringify(entries, null, 2));
+      fs.writeFileSync(MEMORY_FILE, JSON.stringify(entries, null, 2));
 
       // Save tools
       const tools = Array.from(this.tools.values());
@@ -81,7 +84,7 @@ export class MemoryStorage {
         `💾 Saved ${entries.length} entries and ${tools.length} tools`
       );
     } catch (error) {
-      console.error("❌ Error saving memory data:", error);
+      console.error("❌ Error saving TomiNetwork data:", error);
     }
   }
 
@@ -352,110 +355,7 @@ export class MemoryStorage {
       timestamp: new Date().toISOString(),
     };
   }
-
-  // ========== ANALYSIS OPERATIONS ==========
-
-  /**
-   * Analyze memory data
-   */
-  analyze(type: "summary" | "count" | "trends" | "relationships"): any {
-    const entries = this.listEntries();
-    const tools = this.listTools();
-
-    switch (type) {
-      case "summary":
-        return {
-          totalEntries: entries.length,
-          totalTools: tools.length,
-          totalSize: JSON.stringify(entries).length,
-          mostAccessedEntry: entries.sort(
-            (a, b) => b.accessCount - a.accessCount
-          )[0],
-          mostUsedTool: tools.sort((a, b) => b.usageCount - a.usageCount)[0],
-          typeDistribution: this.getTypeDistribution(entries),
-        };
-
-      case "count":
-        return {
-          entries: entries.length,
-          tools: tools.length,
-          byType: this.getTypeDistribution(entries),
-          byToolType: this.getToolTypeDistribution(tools),
-        };
-
-      case "trends":
-        return {
-          recentEntries: entries.slice(0, 10),
-          recentTools: tools.slice(0, 5),
-          accessTrends: this.getAccessTrends(entries),
-        };
-
-      case "relationships":
-        return {
-          tagRelationships: this.getTagRelationships(entries),
-          keyPatterns: this.getKeyPatterns(entries),
-        };
-
-      default:
-        return { error: "Unknown analysis type" };
-    }
-  }
-
-  private getTypeDistribution(entries: MemoryEntry[]): Record<string, number> {
-    const distribution: Record<string, number> = {};
-    for (const entry of entries) {
-      distribution[entry.type] = (distribution[entry.type] || 0) + 1;
-    }
-    return distribution;
-  }
-
-  private getToolTypeDistribution(tools: MemoryTool[]): Record<string, number> {
-    const distribution: Record<string, number> = {};
-    for (const tool of tools) {
-      distribution[tool.type] = (distribution[tool.type] || 0) + 1;
-    }
-    return distribution;
-  }
-
-  private getAccessTrends(entries: MemoryEntry[]): any {
-    return entries
-      .sort((a, b) => b.accessCount - a.accessCount)
-      .slice(0, 10)
-      .map((e) => ({
-        key: e.key,
-        accessCount: e.accessCount,
-        lastAccessed: e.lastAccessed,
-      }));
-  }
-
-  private getTagRelationships(entries: MemoryEntry[]): Record<string, number> {
-    const tagCount: Record<string, number> = {};
-    for (const entry of entries) {
-      if (entry.tags) {
-        for (const tag of entry.tags) {
-          tagCount[tag] = (tagCount[tag] || 0) + 1;
-        }
-      }
-    }
-    return tagCount;
-  }
-
-  private getKeyPatterns(entries: MemoryEntry[]): any {
-    const patterns: Record<string, number> = {};
-    for (const entry of entries) {
-      const parts = entry.key.split(/[._-]/);
-      for (const part of parts) {
-        if (part.length > 2) {
-          patterns[part] = (patterns[part] || 0) + 1;
-        }
-      }
-    }
-    return Object.entries(patterns)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
-  }
 }
 
 // Singleton instance
-export const memoryStorage = new MemoryStorage();
+export const memoryCore = new MemoryCore();

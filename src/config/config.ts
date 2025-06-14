@@ -19,15 +19,20 @@ export const ENV = {
 /**
  * Cấu hình ứng dụng
  */
+import { TOMINETWORK_SERVER, LIMITS } from "../core/constants.js";
+
 export const APP_CONFIG = {
   // Tên ứng dụng
-  NAME: "Memory MCP Server",
+  NAME: TOMINETWORK_SERVER.NAME,
 
   // Phiên bản
-  VERSION: "1.0.0",
+  VERSION: TOMINETWORK_SERVER.VERSION,
+
+  // Mô tả
+  DESCRIPTION: TOMINETWORK_SERVER.DESCRIPTION,
 
   // Thời gian chờ mặc định (ms)
-  DEFAULT_TIMEOUT: 5000,
+  DEFAULT_TIMEOUT: LIMITS.DEFAULT_TIMEOUT,
 
   // Số lần thử lại tối đa
   MAX_RETRIES: 3,
